@@ -105,13 +105,42 @@ class MyApp(tk.Tk):
 
         def submit(name):
             # Close the input window
-            input_window.destroy()
+            if playlist_management.create_playlist(name):
+                input_window.destroy()
 
-            # Create a directory based on the input name
-            playlist_management.create_playlist(name)
-            button = tk.Button(tab2, text=name, bg=settings.colours["secondary"], width=60,
-                               command=lambda p=name: display_content(p))
-            button.pack()
+                # Create a directory based on the input name
+                button = tk.Button(tab2, text=name, bg=settings.colours["secondary"], width=60,
+                                   command=lambda p=name: display_content(p, button))
+                button.pack()
+
+        def delete_downloaded_file(listbox):
+            selected = listbox.curselection()
+            if selected:
+                file = listbox.get(selected[0])
+                if playlist_management.remove_audio_file_from_downloaded(file):
+                    listbox.delete(selected[0])
+
+        def delete_playlist(playlist, p_button, win):
+
+            if playlist_management.delete_playlist(playlist):
+                win.destroy()
+
+                p_button.pack_forget()
+
+                for widget in p_button.winfo_children():
+                    widget.pack()
+
+                p_button.destroy()
+
+        scrollbar.config(command=text.yview)
+
+
+        def delete_selected_file(listbox, playlist):
+            selected = listbox.curselection()
+            if selected:
+                file = listbox.get(selected[0])
+                if playlist_management.remove_audio_file_from_playlist(file, playlist):
+                    listbox.delete(selected[0])
 
         def display_downloads():
             playlist_window = tk.Tk()
@@ -129,6 +158,9 @@ class MyApp(tk.Tk):
             for file in files:
                 listbox.insert('end', file)
 
+            button = tk.Button(playlist_window, text='Delete Audio', command=lambda: delete_downloaded_file(listbox))
+            button.pack()
+
             scrollbar.configure(command=listbox.yview)
             playlist_window.mainloop()
 
@@ -141,11 +173,11 @@ class MyApp(tk.Tk):
         downloadedAudioButton.pack()
 
         for playlist in playlist_management.display_playlists():
-            button = tk.Button(tab2, text=playlist, bg=settings.colours["secondary"], width=60,
-                               command=lambda p=playlist: display_content(p))
-            button.pack()
+            playlist_button = tk.Button(tab2, text=playlist, bg=settings.colours["secondary"], width=60,
+                               command=lambda p=playlist: display_content(p, playlist_button))
+            playlist_button.pack()
 
-        def display_content(playlist):
+        def display_content(playlist, b):
             playlist_window = tk.Tk()
             playlist_window.title(playlist)
             playlist_window.geometry("200x450")
@@ -161,10 +193,16 @@ class MyApp(tk.Tk):
             for file in files:
                 listbox.insert('end', file)
 
+            delete_audio_button = tk.Button(playlist_window, text = 'Delete Audio', command= lambda: delete_selected_file(listbox, playlist))
+            delete_audio_button.pack()
+
+            delete_playlist_button = tk.Button(playlist_window, text = 'Delete Playlist', command = lambda:
+                                               delete_playlist(playlist, b, playlist_window))
+            delete_playlist_button.pack()
+
+
             scrollbar.configure(command=listbox.yview)
             playlist_window.mainloop()
-
-        scrollbar.config(command=text.yview)
 
         # Tab 3 - Settings System
 
