@@ -64,23 +64,17 @@ def display_downloaded_audio():
 def move_audio_file_from_downloaded_audio(file, playlist):
     for indexed_file in os.listdir(downloaded_folder):
         if file in indexed_file:
-            print(indexed_file)
-            is_file = input("Is this your file? (y/n)\n")
-
-            if "y" in is_file:
-                shutil.move(downloaded_folder + str(indexed_file),
-                            "Playlists/" + str(playlist))
+            shutil.move(downloaded_folder + "/" + str(indexed_file),
+                        playlist_folder + "/" + str(playlist))
+            return
 
 
 def move_audio_file_from_playlist(file, playlist1, playlist2):
-    for indexed_file in os.listdir(playlist_folder + str(playlist1)):
+    for indexed_file in os.listdir(playlist_folder + "/" + str(playlist1)):
         if file in indexed_file:
-            print(indexed_file)
-            is_file = input("Is this your file? (y/n)\n")
-
-            if "y" in is_file:
-                shutil.move(playlist_folder + str(playlist1) + "/" + indexed_file,
-                            playlist_folder + str(playlist2))
+            shutil.move(playlist_folder + "/" + str(playlist1) + "/" + indexed_file,
+                            playlist_folder + "/" + str(playlist2))
+            return
 
 def remove_audio_file_from_playlist(file, playlist):
     for indexed_file in os.listdir(playlist_folder + "/" + str(playlist)):
