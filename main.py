@@ -142,6 +142,18 @@ class MyApp(tk.Tk):
                 if playlist_management.remove_audio_file_from_playlist(file, playlist):
                     listbox.delete(selected[0])
 
+        def get_selected_file(listbox):
+            selected = listbox.curselection()
+            if selected:
+                file = listbox.get(selected[0])
+                return file
+
+        def get_playlist(listbox):
+            selected = listbox.curselection()
+            if selected:
+                file = listbox.get(selected[0])
+                return file
+
         def display_downloads():
             playlist_window = tk.Tk()
             playlist_window.title(playlist)
@@ -161,8 +173,71 @@ class MyApp(tk.Tk):
             button = tk.Button(playlist_window, text='Delete Audio', command=lambda: delete_downloaded_file(listbox))
             button.pack()
 
+            move_audio_button = tk.Button(playlist_window, text='Move Audio To..',
+                                          command=lambda: move_downloaded_audio_gui(get_selected_file(listbox), listbox))
+            move_audio_button.pack()
+
             scrollbar.configure(command=listbox.yview)
             playlist_window.mainloop()
+
+        def move_audio(file, original_playlist, new_playlist, gui, listbox):
+
+            playlist_management.move_audio_file_from_playlist(file, original_playlist, new_playlist)
+            gui.destroy()
+
+            index = listbox.get(0, tk.END).index(file)
+            listbox.delete(index)
+
+        def move_downloaded_audio(file, new_playlist, gui, listbox):
+
+            playlist_management.move_audio_file_from_downloaded_audio(file, new_playlist)
+            gui.destroy()
+
+            index = listbox.get(0, tk.END).index(file)
+            listbox.delete(index)
+
+        def move_downloaded_audio_gui(f, l):
+            playlist_display = tk.Tk()
+            playlist_display.title("Playlists")
+            playlist_display.geometry("300x500")
+            scrollbar = tk.Scrollbar(playlist_display)
+            scrollbar.pack(side='right', fill='y')
+
+            listbox = tk.Listbox(playlist_display, yscrollcommand=scrollbar.set)
+            listbox.pack(fill=BOTH)
+
+            files = playlist_management.display_playlists()
+
+            for file in files:
+                listbox.insert('end', file)
+
+            button = tk.Button(playlist_display, text='Move Audio', command = lambda: move_downloaded_audio(f, get_playlist(listbox), playlist_display, l))
+            button.pack()
+
+            scrollbar.configure(command=listbox.yview)
+            playlist_display.mainloop()
+
+
+        def move_audio_gui(f, original_playlist, l):
+            playlist_display = tk.Tk()
+            playlist_display.title("Playlists")
+            playlist_display.geometry("300x500")
+            scrollbar = tk.Scrollbar(playlist_display)
+            scrollbar.pack(side='right', fill='y')
+
+            listbox = tk.Listbox(playlist_display, yscrollcommand=scrollbar.set)
+            listbox.pack(fill=BOTH)
+
+            files = playlist_management.display_playlists()
+
+            for file in files:
+                listbox.insert('end', file)
+
+            button = tk.Button(playlist_display, text='Move Audio', command = lambda: move_audio(f, original_playlist, get_playlist(listbox), playlist_display, l))
+            button.pack()
+
+            scrollbar.configure(command=listbox.yview)
+            playlist_display.mainloop()
 
         createNewPlaylistButton = tk.Button(tab2, text="Create New Playlist", font = ("Comic Sans", 15),
                                       background=settings.colours["secondary"], width=33, command=input_playlist_name)
@@ -199,6 +274,9 @@ class MyApp(tk.Tk):
             delete_playlist_button = tk.Button(playlist_window, text = 'Delete Playlist', command = lambda:
                                                delete_playlist(playlist, b, playlist_window))
             delete_playlist_button.pack()
+
+            move_audio_button = tk.Button(playlist_window, text = 'Move Audio To..', command = lambda: move_audio_gui(get_selected_file(listbox), playlist, listbox))
+            move_audio_button.pack()
 
 
             scrollbar.configure(command=listbox.yview)
