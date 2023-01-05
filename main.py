@@ -1,7 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import *
-
+from pygame import mixer
+from time import sleep
+from queue_system import queue
+from threading import Thread
 import youtube_to_mp3
 import playlist_management
 import settings
@@ -16,6 +19,10 @@ class MyApp(tk.Tk):
         self.title("OCR MP3 Player")
         self.configure(bg=settings.colours["primary"])
 
+        self.music_queue = queue()
+        self.timestamp = 0
+
+        style = ttk.Style(self)
         style = ttk.Style(self)
         style.theme_create("dummy", parent="alt", settings={
             "TNotebook": {"configure": {"tabmargins": [2, 5, 2, 0]}},
@@ -51,30 +58,35 @@ class MyApp(tk.Tk):
                 temporary_label.place(x=0, y=100)
                 global temporary_button
                 temporary_button = tk.Button(tab1, text="Confirm", font=("Comic Sans", 8),
-                                             background=settings.colours["secondary"], command=confirm)
+                                             background=settings.colours["secondary"], command=confirm_button)
                 temporary_button.place(x=10, y=130)
 
         def confirm():
             data = youtubeMp3DownloaderEntry.get()
+            progress_label = tk.Label(tab1, text='Downloading', fg='black', bg=settings.colours["primary"])
+            progress_label.place(x=0, y=160)
             youtube_to_mp3.download_youtube_mp3(data)
+            progress_label.configure(text='Success!', fg='light green')
             temporary_label.destroy()
             temporary_button.destroy()
 
-            global success_label
-            success_label = tk.Label(tab1, text='Success', fg='light green', bg = settings.colours["primary"])
-            success_label.place(x=0, y=160)
+            cleanup(progress_label)
 
-            self.after(5000, cleanup)
+        def confirm_button():
 
-        def cleanup():
+            thread = Thread(target=confirm)
+            thread.start()
 
-            success_label.destroy()
+        def cleanup(l):
+
+            sleep(5)
+            l.destroy()
 
         youtube_label = tk.Label(tab1, text="Youtube MP3 Downloader", font=("Comic Sans", 13),
                                  background=settings.colours["secondary"])
         youtube_label.place(x=80, y=10)
         youtube_button = tk.Button(tab1, text="Download Now", font=("Comic Sans", 8),
-                                   background=settings.colours["secondary"], command=download_button_function)
+                                   background=settings.colours["secondary"], command= download_button_function)
         youtube_button.place(x=140, y=60)
 
         # Tab 2 - Playlist System
@@ -252,6 +264,15 @@ class MyApp(tk.Tk):
                                command=lambda p=playlist: display_content(p, playlist_button))
             playlist_button.pack()
 
+        def on_play_playlist(playlist, win):
+
+            win.destroy()
+            self.pause()
+            self.music_queue.set_playlist_to_queue(playlist)
+            print(self.music_queue.display_queue())
+            thread = Thread(target=self.play, args=(self.music_queue.display_queue()[0], self.timestamp,))
+            thread.start()
+
         def display_content(playlist, b):
             playlist_window = tk.Tk()
             playlist_window.title(playlist)
@@ -278,9 +299,28 @@ class MyApp(tk.Tk):
             move_audio_button = tk.Button(playlist_window, text = 'Move Audio To..', command = lambda: move_audio_gui(get_selected_file(listbox), playlist, listbox))
             move_audio_button.pack()
 
+            play_playlist_button = tk.Button(playlist_window, text = 'Play Playlist', command = lambda: on_play_playlist(playlist, playlist_window))
+            play_playlist_button.pack()
+
 
             scrollbar.configure(command=listbox.yview)
             playlist_window.mainloop()
+
+        # MP3 Player
+
+        mixer.init()
+
+        self.progress_bar = ttk.Progressbar(tab2, orient = tk.HORIZONTAL, length=200)
+        self.play_button = ttk.Button(tab2, text= 'Play', command = lambda: self.play(self.music_queue.display_playing_track(), self.timestamp))
+        self.pause_button = ttk.Button(tab2, text= 'Pause', command = self.pause)
+        self.backward_button = ttk.Button(tab2, text='<<', command=self.backward)
+        self.forward_button = ttk.Button(tab2, text = '>>', command = self.forward)
+
+        self.progress_bar.pack(side=tk.BOTTOM)
+        self.play_button.pack(side=tk.LEFT)
+        self.pause_button.pack(side=tk.LEFT)
+        self.backward_button.pack(side=tk.LEFT)
+        self.forward_button.pack(side=tk.LEFT)
 
         # Tab 3 - Settings System
 
@@ -329,6 +369,43 @@ class MyApp(tk.Tk):
         confirm_secondary = tk.Button(tab3, text="Confirm", font=("Comic Sans", 8),
                                       background=settings.colours["secondary"], command=change_secondary_colour)
         confirm_secondary.place(x=230, y=90)
+
+    def play(self, file, timestamp):
+        mixer.music.load(file)
+        if timestamp == -1:
+            mixer.music.play()
+        else:
+            print(timestamp)
+            mixer.music.set_pos(timestamp)
+            mixer.music.play()
+
+        self.update_progress_bar(file)
+
+    def pause(self):
+
+        self.timestamp = mixer.music.get_pos()
+        mixer.music.pause()
+
+    def backward(self):
+        mixer.music.rewind(-5000)
+
+    def forward(self):
+        mixer.music.rewind(5000)
+
+    def get_length(self, file):
+
+        from pydub import AudioSegment
+
+        return len(AudioSegment.from_file(file)) / 1000
+
+    def update_progress_bar(self, file):
+
+        current_time = mixer.music.get_pos() / 1000
+        total_time = self.get_length(file)
+        self.progress_bar['value'] = current_time / total_time
+
+        self.after(100, self.update_progress_bar(file))
+
 
 
 if __name__ == '__main__':
