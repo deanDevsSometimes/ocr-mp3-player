@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import *
-from pygame import mixer
+import vlc
 from time import sleep
 from queue_system import queue
 from threading import Thread
@@ -20,9 +20,7 @@ class MyApp(tk.Tk):
         self.configure(bg=settings.colours["primary"])
 
         self.music_queue = queue()
-        self.timestamp = 0
 
-        style = ttk.Style(self)
         style = ttk.Style(self)
         style.theme_create("dummy", parent="alt", settings={
             "TNotebook": {"configure": {"tabmargins": [2, 5, 2, 0]}},
@@ -267,10 +265,10 @@ class MyApp(tk.Tk):
         def on_play_playlist(playlist, win):
 
             win.destroy()
-            self.pause()
+            self.player.pause()
             self.music_queue.set_playlist_to_queue(playlist)
             print(self.music_queue.display_queue())
-            thread = Thread(target=self.play, args=(self.music_queue.display_queue()[0], self.timestamp,))
+            thread = Thread(target=self.play, args=(self.music_queue.display_queue()[0],))
             thread.start()
 
         def display_content(playlist, b):
@@ -308,10 +306,10 @@ class MyApp(tk.Tk):
 
         # MP3 Player
 
-        mixer.init()
+        self.player = vlc.MediaPlayer()
 
-        self.progress_bar = ttk.Progressbar(tab2, orient = tk.HORIZONTAL, length=200)
-        self.play_button = ttk.Button(tab2, text= 'Play', command = lambda: self.play(self.music_queue.display_playing_track(), self.timestamp))
+        self.progress_bar = ttk.Progressbar(tab2, orient='horizontal', length=200, mode='determinate')
+        self.play_button = ttk.Button(tab2, text= 'Play', command = lambda: self.play(0))
         self.pause_button = ttk.Button(tab2, text= 'Pause', command = self.pause)
         self.backward_button = ttk.Button(tab2, text='<<', command=self.backward)
         self.forward_button = ttk.Button(tab2, text = '>>', command = self.forward)
@@ -321,6 +319,8 @@ class MyApp(tk.Tk):
         self.pause_button.pack(side=tk.LEFT)
         self.backward_button.pack(side=tk.LEFT)
         self.forward_button.pack(side=tk.LEFT)
+
+        self.after(100, self.update_progress_bar)
 
         # Tab 3 - Settings System
 
@@ -370,41 +370,35 @@ class MyApp(tk.Tk):
                                       background=settings.colours["secondary"], command=change_secondary_colour)
         confirm_secondary.place(x=230, y=90)
 
-    def play(self, file, timestamp):
-        mixer.music.load(file)
-        if timestamp == -1:
-            mixer.music.play()
-        else:
-            print(timestamp)
-            mixer.music.set_pos(timestamp)
-            mixer.music.play()
+    def play(self, file):
+        if file != 0:
+            media = vlc.Media(file)
+            self.player.set_media(media)
+        self.player.play()
 
-        self.update_progress_bar(file)
+        #self.update_progress_bar(file)
 
     def pause(self):
-
-        self.timestamp = mixer.music.get_pos()
-        mixer.music.pause()
+        self.player.pause()
 
     def backward(self):
-        mixer.music.rewind(-5000)
+        self.player.set_time(self.player.get_time() - 5000)
 
     def forward(self):
-        mixer.music.rewind(5000)
+        self.player.set_time(self.player.get_time() + 5000)
 
-    def get_length(self, file):
+    def update_progress_bar(self):
 
-        from pydub import AudioSegment
+        # Get the current time and the total length of the MP3 file
+        current_time = self.player.get_time() / 1000
+        total_length = self.player.get_length() / 1000
 
-        return len(AudioSegment.from_file(file)) / 1000
+        # Update the progress bar value
+        self.progress_bar['value'] = current_time / total_length
 
-    def update_progress_bar(self, file):
-
-        current_time = mixer.music.get_pos() / 1000
-        total_time = self.get_length(file)
-        self.progress_bar['value'] = current_time / total_time
-
-        self.after(100, self.update_progress_bar(file))
+        # If the MP3 file is not finished playing, call this function again after 100 milliseconds
+        if current_time < total_length:
+            self.after(100, self.update_progress_bar)
 
 
 
