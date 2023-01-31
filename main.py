@@ -18,7 +18,7 @@ class MyApp(tk.Tk):
         self.resizable(False, False)
         self.title("OCR MP3 Player")
         self.configure(bg=settings.colours["primary"])
-
+        self.dragging = False
         self.music_queue = queue()
 
         style = ttk.Style(self)
@@ -317,19 +317,22 @@ class MyApp(tk.Tk):
 
         self.player = vlc.MediaPlayer()
 
-        self.progress_bar = ttk.Progressbar(tab2, orient='horizontal', length=200, mode='determinate')
+        self.progress_bar = tk.Scale(tab2, from_=0, to=100, orient="horizontal", sliderlength=20, length=200,
+                                     command=self.on_scale_drag)
+        self.progress_bar.pack(side="bottom", fill="x")
+        self.progress_bar.bind("<ButtonPress-1>", self.on_scale_drag_start)
+        self.progress_bar.bind("<B1-Motion>", self.on_scale_drag)
+        self.progress_bar.bind("<ButtonRelease-1>", self.on_scale_drag_end)
+
         self.play_button = ttk.Button(tab2, text='Play', command=lambda: self.play(0))
         self.pause_button = ttk.Button(tab2, text='Pause', command=self.pause)
         self.backward_button = ttk.Button(tab2, text='<<', command=self.backward)
         self.forward_button = ttk.Button(tab2, text='>>', command=self.forward)
 
-        self.progress_bar.pack(side=tk.BOTTOM)
         self.play_button.pack(side=tk.LEFT)
         self.pause_button.pack(side=tk.LEFT)
         self.backward_button.pack(side=tk.LEFT)
         self.forward_button.pack(side=tk.LEFT)
-
-        self.after(100, self.update_progress_bar)
 
         # Tab 3 - Settings System
 
@@ -385,7 +388,7 @@ class MyApp(tk.Tk):
             self.player.set_media(media)
         self.player.play()
 
-        # self.update_progress_bar(file)
+        self.update_progress()
 
     def pause(self):
         self.player.pause()
@@ -396,18 +399,32 @@ class MyApp(tk.Tk):
     def forward(self):
         self.player.set_time(self.player.get_time() + 5000)
 
-    def update_progress_bar(self):
+    def update_progress(self):
+        # Get the current position of the music
+        current_position = self.player.get_position()
+        # If the user is not actively dragging the scale, update it
+        if not self.dragging:
+            self.progress_bar.set(current_position * 100)
+        # Call the update_progress function again after a certain amount of time
+        current_time = timedelta(seconds=current_position * self.player.get_length())
+        self.progress_time_var.set(str(current_time)[:-3])
+        self.after(100, self.update_progress)
 
-        # Get the current time and the total length of the MP3 file
-        current_time = self.player.get_time() / 1000
-        total_length = self.player.get_length() / 1000
+    def on_scale_drag_start(self, event):
+        self.dragging = True
 
-        # Update the progress bar value
-        self.progress_bar['value'] = current_time / total_length
+    def on_scale_drag(self, event):
+        if self.dragging:
+            new_position = self.progress_bar.get() / 100
+            self.player.set_position(new_position)
+            self.player.play()
 
-        # If the MP3 file is not finished playing, call this function again after 100 milliseconds
-        if current_time < total_length:
-            self.after(100, self.update_progress_bar)
+    def on_scale_drag_end(self, event):
+        if self.dragging:
+            self.dragging = False
+            new_position = self.progress_bar.get() / 100
+            self.player.set_position(new_position)
+
 
 
 if __name__ == '__main__':
