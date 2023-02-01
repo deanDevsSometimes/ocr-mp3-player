@@ -8,6 +8,7 @@ from threading import Thread
 import youtube_to_mp3
 import playlist_management
 import settings
+from datetime import timedelta
 
 
 class MyApp(tk.Tk):
@@ -317,22 +318,32 @@ class MyApp(tk.Tk):
 
         self.player = vlc.MediaPlayer()
 
+        buttonFrame = Frame(tab2, background=settings.colours['primary'])
+        buttonFrame.pack(side="bottom", fill="none", pady=10)
+
         self.progress_bar = tk.Scale(tab2, from_=0, to=100, orient="horizontal", sliderlength=20, length=200,
-                                     command=self.on_scale_drag)
+                                     bg= settings.colours["primary"], troughcolor= settings.colours["secondary"], command=self.on_scale_drag)
         self.progress_bar.pack(side="bottom", fill="x")
         self.progress_bar.bind("<ButtonPress-1>", self.on_scale_drag_start)
         self.progress_bar.bind("<B1-Motion>", self.on_scale_drag)
         self.progress_bar.bind("<ButtonRelease-1>", self.on_scale_drag_end)
 
-        self.play_button = ttk.Button(tab2, text='Play', command=lambda: self.play(0))
-        self.pause_button = ttk.Button(tab2, text='Pause', command=self.pause)
-        self.backward_button = ttk.Button(tab2, text='<<', command=self.backward)
-        self.forward_button = ttk.Button(tab2, text='>>', command=self.forward)
+        self.play_button = tk.Button(buttonFrame, text='Play', background = settings.colours['secondary'], command=lambda: self.play(0))
+        self.pause_button = tk.Button(buttonFrame, text='Pause', background = settings.colours['secondary'], command=self.pause)
+        self.backward_button = tk.Button(buttonFrame, text='<<', background = settings.colours['secondary'], command=self.backward)
+        self.forward_button = tk.Button(buttonFrame, text='>>', background = settings.colours['secondary'], command=self.forward)
+        self.next_track_button = tk.Button(buttonFrame, text='>|', background = settings.colours['secondary'], command=self.skip_forward)
+        self.last_track_button = tk.Button(buttonFrame, text='|<', background = settings.colours['secondary'], command = self.skip_backward)
 
-        self.play_button.pack(side=tk.LEFT)
-        self.pause_button.pack(side=tk.LEFT)
-        self.backward_button.pack(side=tk.LEFT)
-        self.forward_button.pack(side=tk.LEFT)
+        self.last_track_button.pack(side='left', padx=5)
+        self.backward_button.pack(side='left', padx=5)
+        self.play_button.pack(side='left', padx=5)
+        self.pause_button.pack(side='left', padx=5)
+        self.forward_button.pack(side='left', padx=5)
+        self.next_track_button.pack(side='left', padx=5)
+
+
+
 
         # Tab 3 - Settings System
 
@@ -390,6 +401,13 @@ class MyApp(tk.Tk):
 
         self.update_progress()
 
+    def skip_forward(self):
+        self.index = (self.index + 1) % len(self.queue)
+        
+
+    def skip_backward(self):
+        self.index = (self.index - 1) % len(self.queue)
+
     def pause(self):
         self.player.pause()
 
@@ -406,8 +424,6 @@ class MyApp(tk.Tk):
         if not self.dragging:
             self.progress_bar.set(current_position * 100)
         # Call the update_progress function again after a certain amount of time
-        current_time = timedelta(seconds=current_position * self.player.get_length())
-        self.progress_time_var.set(str(current_time)[:-3])
         self.after(100, self.update_progress)
 
     def on_scale_drag_start(self, event):
