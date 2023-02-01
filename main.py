@@ -8,7 +8,6 @@ from threading import Thread
 import youtube_to_mp3
 import playlist_management
 import settings
-from datetime import timedelta
 
 
 class MyApp(tk.Tk):
@@ -274,8 +273,7 @@ class MyApp(tk.Tk):
             win.destroy()
             self.player.pause()
             self.music_queue.set_playlist_to_queue(playlist_to_display)
-            print(self.music_queue.display_queue())
-            thread = Thread(target=self.play, args=(self.music_queue.display_queue()[0],))
+            thread = Thread(target=self.play, args=(self.music_queue.display_queue()[self.music_queue.index],))
             thread.start()
 
         def display_content(playlist_arg, b):
@@ -322,11 +320,27 @@ class MyApp(tk.Tk):
         buttonFrame.pack(side="bottom", fill="none", pady=10)
 
         self.progress_bar = tk.Scale(tab2, from_=0, to=100, orient="horizontal", sliderlength=20, length=200,
-                                     bg= settings.colours["primary"], troughcolor= settings.colours["secondary"], command=self.on_scale_drag)
+                                     bg= settings.colours["primary"], troughcolor= settings.colours["secondary"], highlightthickness=0, command=self.on_scale_drag)
         self.progress_bar.pack(side="bottom", fill="x")
         self.progress_bar.bind("<ButtonPress-1>", self.on_scale_drag_start)
         self.progress_bar.bind("<B1-Motion>", self.on_scale_drag)
         self.progress_bar.bind("<ButtonRelease-1>", self.on_scale_drag_end)
+
+        volume_frame = Frame(tab2, background=settings.colours["primary"])
+        volume_frame.pack(side=tk.BOTTOM, fill=tk.X, expand=False)
+
+        self.volume_label = tk.Label(volume_frame, text='Volume', background=settings.colours["secondary"])
+        self.volume_label.pack(side=tk.TOP)
+
+        self.volume_slider = tk.Scale(volume_frame, from_=0, to=100, orient=tk.HORIZONTAL,
+                                      bg= settings.colours["primary"], troughcolor= settings.colours["secondary"],
+                                      highlightthickness=0, command=self.set_volume)
+        self.volume_slider.set(100)
+        self.volume_slider.pack(side=tk.BOTTOM)
+
+        self.song_name = tk.StringVar()
+        self.song_label = tk.Label(volume_frame, bg= settings.colours["primary"], textvariable=self.song_name)
+        self.song_label.pack(side=tk.BOTTOM)
 
         self.play_button = tk.Button(buttonFrame, text='Play', background = settings.colours['secondary'], command=lambda: self.play(0))
         self.pause_button = tk.Button(buttonFrame, text='Pause', background = settings.colours['secondary'], command=self.pause)
@@ -398,15 +412,22 @@ class MyApp(tk.Tk):
             media = vlc.Media(file)
             self.player.set_media(media)
         self.player.play()
+        song_name = self.music_queue.get_current_song_name()[:-3]
+        if len(song_name) > 60:
+            song_name = song_name[:57] + "..."
+        self.song_name.set(song_name)
 
         self.update_progress()
 
     def skip_forward(self):
-        self.index = (self.index + 1) % len(self.queue)
-        
+        self.pause()
+        self.music_queue.next_item()
+        self.play(self.music_queue.display_playing_track())
 
     def skip_backward(self):
-        self.index = (self.index - 1) % len(self.queue)
+        self.pause()
+        self.music_queue.last_item()
+        self.play(self.music_queue.display_playing_track())
 
     def pause(self):
         self.player.pause()
@@ -441,7 +462,9 @@ class MyApp(tk.Tk):
             new_position = self.progress_bar.get() / 100
             self.player.set_position(new_position)
 
-
+    def set_volume(self, volume):
+        v = int(volume)
+        self.player.audio_set_volume(v)
 
 if __name__ == '__main__':
     app = MyApp()
