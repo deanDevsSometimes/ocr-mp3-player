@@ -9,10 +9,12 @@ class queue():
         self.tail = None
         self.index = 0
         self.queue = []
+        self.playlist = None
 
     def set_playlist_to_queue(self, playlist):
         from playlist_management import display_audio_in_playlist, playlist_folder
         self.queue = [(playlist_folder + "/" + playlist + "/" + i) for i in display_audio_in_playlist(playlist)]
+        self.playlist = playlist
 
         for track in self.queue:
             node = Node(track)
@@ -58,3 +60,24 @@ class queue():
         for i in range(self.index):
             node = node.next
         return node.value
+
+    def next_item(self):
+        if self.index + 1 < len(self.queue):
+            self.index += 1
+        else:
+            self.index = 0
+        return self.queue[self.index]
+
+    def last_item(self):
+        if self.index - 1 < 0:
+            self.index = len(self.queue) - 1
+        else:
+            self.index -= 1
+        return self.queue[self.index]
+
+    def get_current_song_name(self):
+
+        from playlist_management import display_audio_in_playlist
+        return display_audio_in_playlist(self.playlist)[self.index]
+
+
