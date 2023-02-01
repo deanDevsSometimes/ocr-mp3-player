@@ -34,17 +34,17 @@ class MyApp(tk.Tk):
         style.map("TNotebook", background=[("selected", settings.colours["secondary"])])
 
         tabControl = ttk.Notebook(self)
-        tab1 = Frame(tabControl, background=settings.colours["primary"])
-        tab2 = Frame(tabControl, background=settings.colours["primary"])
-        tab3 = Frame(tabControl, background=settings.colours["primary"])
-        tabControl.add(tab1, text='YouTube MP3 Player')
-        tabControl.add(tab2, text='My Playlists')
-        tabControl.add(tab3, text='Settings')
+        self.tab1 = Frame(tabControl, background=settings.colours["primary"])
+        self.tab2 = Frame(tabControl, background=settings.colours["primary"])
+        self.tab3 = Frame(tabControl, background=settings.colours["primary"])
+        tabControl.add(self.tab1, text='YouTube MP3 Player')
+        tabControl.add(self.tab2, text='My Playlists')
+        tabControl.add(self.tab3, text='Settings')
         tabControl.pack(expand=True, fill=BOTH)
 
         # Tab 1 - YouTube MP3 Downloader
 
-        youtubeMp3DownloaderEntry = tk.Entry(tab1, width=30)
+        youtubeMp3DownloaderEntry = tk.Entry(self.tab1, width=30)
         youtubeMp3DownloaderEntry.place(x=90, y=35)
 
         def download_button_function():
@@ -52,16 +52,16 @@ class MyApp(tk.Tk):
             title = youtube_to_mp3.get_title(data)
             if title is not None:
                 global temporary_label
-                temporary_label = tk.Label(tab1, text=youtube_to_mp3.get_title(data), font=("Comic Sans", 10))
+                temporary_label = tk.Label(self.tab1, text=youtube_to_mp3.get_title(data), font=("Comic Sans", 10))
                 temporary_label.place(x=0, y=100)
                 global temporary_button
-                temporary_button = tk.Button(tab1, text="Confirm", font=("Comic Sans", 8),
+                temporary_button = tk.Button(self.tab1, text="Confirm", font=("Comic Sans", 8),
                                              background=settings.colours["secondary"], command=confirm_button)
                 temporary_button.place(x=10, y=130)
 
         def confirm():
             data = youtubeMp3DownloaderEntry.get()
-            progress_label = tk.Label(tab1, text='Downloading', fg='black', bg=settings.colours["primary"])
+            progress_label = tk.Label(self.tab1, text='Downloading', fg='black', bg=settings.colours["primary"])
             progress_label.place(x=0, y=160)
             youtube_to_mp3.download_youtube_mp3(data)
             progress_label.configure(text='Success!', fg='light green')
@@ -80,19 +80,19 @@ class MyApp(tk.Tk):
             sleep(5)
             label.destroy()
 
-        youtube_label = tk.Label(tab1, text="Youtube MP3 Downloader", font=("Comic Sans", 13),
+        youtube_label = tk.Label(self.tab1, text="Youtube MP3 Downloader", font=("Comic Sans", 13),
                                  background=settings.colours["secondary"])
         youtube_label.place(x=80, y=10)
-        youtube_button = tk.Button(tab1, text="Download Now", font=("Comic Sans", 8),
+        youtube_button = tk.Button(self.tab1, text="Download Now", font=("Comic Sans", 8),
                                    background=settings.colours["secondary"], command=download_button_function)
         youtube_button.place(x=140, y=60)
 
         # Tab 2 - Playlist System
 
-        scrollbar = tk.Scrollbar(tab2, orient='vertical')
+        scrollbar = tk.Scrollbar(self.tab2, orient='vertical')
         scrollbar.pack(side='right', fill='y')
 
-        text = tk.Text(tab2, yscrollcommand=scrollbar.set, height=0, width=0)
+        text = tk.Text(self.tab2, yscrollcommand=scrollbar.set, height=0, width=0)
         text.place(x=0, y=0)
 
         def input_playlist_name():
@@ -119,7 +119,7 @@ class MyApp(tk.Tk):
                 input_window.destroy()
 
                 # Create a directory based on the input name
-                button = tk.Button(tab2, text=name, bg=settings.colours["secondary"], width=60,
+                button = tk.Button(self.tab2, text=name, bg=settings.colours["secondary"], width=60,
                                    command=lambda p=name: display_content(p, button))
                 button.pack()
 
@@ -254,17 +254,17 @@ class MyApp(tk.Tk):
             scrollbar_for_gui.configure(command=listbox.yview)
             playlist_display.mainloop()
 
-        createNewPlaylistButton = tk.Button(tab2, text="Create New Playlist", font=("Comic Sans", 15),
+        createNewPlaylistButton = tk.Button(self.tab2, text="Create New Playlist", font=("Comic Sans", 15),
                                             background=settings.colours["secondary"], width=33,
                                             command=input_playlist_name)
         createNewPlaylistButton.pack()
 
-        downloadedAudioButton = tk.Button(tab2, text="Downloaded Audio", font=("Comic Sans", 15),
+        downloadedAudioButton = tk.Button(self.tab2, text="Downloaded Audio", font=("Comic Sans", 15),
                                           background=settings.colours["secondary"], width=33, command=display_downloads)
         downloadedAudioButton.pack()
 
         for playlist in playlist_management.display_playlists():
-            playlist_button = tk.Button(tab2, text=playlist, bg=settings.colours["secondary"], width=60,
+            playlist_button = tk.Button(self.tab2, text=playlist, bg=settings.colours["secondary"], width=60,
                                         command=lambda p=playlist: display_content(p, playlist_button))
             playlist_button.pack()
 
@@ -316,38 +316,38 @@ class MyApp(tk.Tk):
 
         self.player = vlc.MediaPlayer()
 
-        buttonFrame = Frame(tab2, background=settings.colours['primary'])
-        buttonFrame.pack(side="bottom", fill="none", pady=10)
+        self.buttonFrame = Frame(self.tab2, background=settings.colours['primary'])
+        self.buttonFrame.pack(side="bottom", fill="none", pady=10)
 
-        self.progress_bar = tk.Scale(tab2, from_=0, to=100, orient="horizontal", sliderlength=20, length=200,
+        self.progress_bar = tk.Scale(self.tab2, from_=0, to=100, orient="horizontal", sliderlength=20, length=200,
                                      bg= settings.colours["primary"], troughcolor= settings.colours["secondary"], highlightthickness=0, command=self.on_scale_drag)
         self.progress_bar.pack(side="bottom", fill="x")
         self.progress_bar.bind("<ButtonPress-1>", self.on_scale_drag_start)
         self.progress_bar.bind("<B1-Motion>", self.on_scale_drag)
         self.progress_bar.bind("<ButtonRelease-1>", self.on_scale_drag_end)
 
-        volume_frame = Frame(tab2, background=settings.colours["primary"])
-        volume_frame.pack(side=tk.BOTTOM, fill=tk.X, expand=False)
+        self.volume_frame = Frame(self.tab2, background=settings.colours["primary"])
+        self.volume_frame.pack(side=tk.BOTTOM, fill=tk.X, expand=False)
 
-        self.volume_label = tk.Label(volume_frame, text='Volume', background=settings.colours["secondary"])
+        self.volume_label = tk.Label(self.volume_frame, text='Volume', background=settings.colours["secondary"])
         self.volume_label.pack(side=tk.TOP)
 
-        self.volume_slider = tk.Scale(volume_frame, from_=0, to=100, orient=tk.HORIZONTAL,
+        self.volume_slider = tk.Scale(self.volume_frame, from_=0, to=100, orient=tk.HORIZONTAL,
                                       bg= settings.colours["primary"], troughcolor= settings.colours["secondary"],
                                       highlightthickness=0, command=self.set_volume)
         self.volume_slider.set(100)
         self.volume_slider.pack(side=tk.BOTTOM)
 
         self.song_name = tk.StringVar()
-        self.song_label = tk.Label(volume_frame, bg= settings.colours["primary"], textvariable=self.song_name)
+        self.song_label = tk.Label(self.volume_frame, bg= settings.colours["primary"], textvariable=self.song_name)
         self.song_label.pack(side=tk.BOTTOM)
 
-        self.play_button = tk.Button(buttonFrame, text='Play', background = settings.colours['secondary'], command=lambda: self.play(0))
-        self.pause_button = tk.Button(buttonFrame, text='Pause', background = settings.colours['secondary'], command=self.pause)
-        self.backward_button = tk.Button(buttonFrame, text='<<', background = settings.colours['secondary'], command=self.backward)
-        self.forward_button = tk.Button(buttonFrame, text='>>', background = settings.colours['secondary'], command=self.forward)
-        self.next_track_button = tk.Button(buttonFrame, text='>|', background = settings.colours['secondary'], command=self.skip_forward)
-        self.last_track_button = tk.Button(buttonFrame, text='|<', background = settings.colours['secondary'], command = self.skip_backward)
+        self.play_button = tk.Button(self.buttonFrame, text='Play', background = settings.colours['secondary'], command=lambda: self.play(0))
+        self.pause_button = tk.Button(self.buttonFrame, text='Pause', background = settings.colours['secondary'], command=self.pause)
+        self.backward_button = tk.Button(self.buttonFrame, text='<<', background = settings.colours['secondary'], command=self.backward)
+        self.forward_button = tk.Button(self.buttonFrame, text='>>', background = settings.colours['secondary'], command=self.forward)
+        self.next_track_button = tk.Button(self.buttonFrame, text='>|', background = settings.colours['secondary'], command=self.skip_forward)
+        self.last_track_button = tk.Button(self.buttonFrame, text='|<', background = settings.colours['secondary'], command = self.skip_backward)
 
         self.last_track_button.pack(side='left', padx=5)
         self.backward_button.pack(side='left', padx=5)
@@ -361,10 +361,10 @@ class MyApp(tk.Tk):
 
         # Tab 3 - Settings System
 
-        primaryEntry = tk.Entry(tab3, width=15)
+        primaryEntry = tk.Entry(self.tab3, width=15)
         primaryEntry.place(x=130, y=60)
 
-        secondaryEntry = tk.Entry(tab3, width=15)
+        secondaryEntry = tk.Entry(self.tab3, width=15)
         secondaryEntry.place(x=130, y=90)
 
         def change_primary_colour():
@@ -373,37 +373,56 @@ class MyApp(tk.Tk):
             if settings.is_colour_valid(data):
                 style.configure('TNotebook.Tab', background=settings.colours["primary"])
 
-                tab1.configure(background=settings.colours["primary"])
-                tab2.configure(background=settings.colours["primary"])
-                tab3.configure(background=settings.colours["primary"])
+                self.tab1.configure(background=settings.colours["primary"])
+                self.tab2.configure(background=settings.colours["primary"])
+                self.tab3.configure(background=settings.colours["primary"])
                 confirm_primary.configure(background=settings.colours["primary"])
+                self.volume_slider.configure(background= settings.colours["primary"])
+                self.song_label.configure(background=settings.colours["primary"])
+                self.volume_frame.configure(background=settings.colours["primary"])
+                self.progress_bar.configure(background=settings.colours["primary"])
+                self.buttonFrame.configure(background=settings.colours["primary"])
 
         def change_secondary_colour():
+            old_colour = settings.colours["secondary"]
             data = secondaryEntry.get().replace(' ', '')
             settings.change_secondary(data)
             if settings.is_colour_valid(data):
                 style.map("TNotebook", background=[("selected", settings.colours["secondary"])])
-                youtube_label.configure(background=settings.colours["secondary"])
-                youtube_button.configure(background=settings.colours["secondary"])
-                settings_label.configure(background=settings.colours["secondary"])
-                primary_label.configure(background=settings.colours["secondary"])
-                secondary_label.configure(background=settings.colours["secondary"])
-                confirm_secondary.configure(background=settings.colours["secondary"])
+                style.configure("TNotebook.Tab", background=settings.colours["secondary"])
+                self.volume_label.configure(background=settings.colours["secondary"])
+                self.volume_slider.configure(troughcolor=settings.colours["secondary"])
+                self.progress_bar.configure(troughcolor=settings.colours["secondary"])
 
-        settings_label = tk.Label(tab3, text="Settings", font=("Comic Sans", 13),
+                for widget in self.buttonFrame.winfo_children():
+                    widget.configure(background=settings.colours["secondary"])
+
+                for widget in self.tab1.winfo_children():
+                    if widget.cget("background") == old_colour:
+                        widget.configure(background=settings.colours["secondary"])
+
+                for widget in self.tab2.winfo_children():
+                    if widget.cget("background") == old_colour:
+                        widget.configure(background=settings.colours["secondary"])
+
+                for widget in self.tab3.winfo_children():
+                    if widget.cget("background") == old_colour:
+                        widget.configure(background=settings.colours["secondary"])
+
+        settings_label = tk.Label(self.tab3, text="Settings", font=("Comic Sans", 13),
                                   background=settings.colours["secondary"])
         settings_label.place(x=150, y=10)
-        primary_label = tk.Label(tab3, text="Primary Colour", font=("Comic Sans", 8),
+        primary_label = tk.Label(self.tab3, text="Primary Colour", font=("Comic Sans", 8),
                                  background=settings.colours["secondary"])
         primary_label.place(x=50, y=60)
-        secondary_label = tk.Label(tab3, text="Secondary Colour", font=("Comic Sans", 8),
+        secondary_label = tk.Label(self.tab3, text="Secondary Colour", font=("Comic Sans", 8),
                                    background=settings.colours["secondary"])
         secondary_label.place(x=33, y=90)
 
-        confirm_primary = tk.Button(tab3, text="Confirm", font=("Comic Sans", 8),
+        confirm_primary = tk.Button(self.tab3, text="Confirm", font=("Comic Sans", 8),
                                     background=settings.colours["primary"], command=change_primary_colour)
         confirm_primary.place(x=230, y=55)
-        confirm_secondary = tk.Button(tab3, text="Confirm", font=("Comic Sans", 8),
+        confirm_secondary = tk.Button(self.tab3, text="Confirm", font=("Comic Sans", 8),
                                       background=settings.colours["secondary"], command=change_secondary_colour)
         confirm_secondary.place(x=230, y=90)
 
@@ -447,16 +466,16 @@ class MyApp(tk.Tk):
         # Call the update_progress function again after a certain amount of time
         self.after(100, self.update_progress)
 
-    def on_scale_drag_start(self, event):
+    def on_scale_drag_start(self):
         self.dragging = True
 
-    def on_scale_drag(self, event):
+    def on_scale_drag(self):
         if self.dragging:
             new_position = self.progress_bar.get() / 100
             self.player.set_position(new_position)
             self.player.play()
 
-    def on_scale_drag_end(self, event):
+    def on_scale_drag_end(self):
         if self.dragging:
             self.dragging = False
             new_position = self.progress_bar.get() / 100
