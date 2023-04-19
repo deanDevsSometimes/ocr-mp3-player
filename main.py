@@ -279,12 +279,12 @@ class MyApp(tk.Tk):
             # that represent it.
             if success:
                 win.destroy()
-                p_button.pack_forget()
+                #p_button.pack_forget()
                 p_button.destroy()
             else:
                 # If the playlist could not be deleted, display an error message.
                 error_message = "Could not delete playlist."
-                Tk.messagebox.showerror("Error", error_message)
+                tkinter.messagebox.showerror("Error", error_message)
 
         def move_audio_gui(file, original_playlist, original_listbox):
             """
