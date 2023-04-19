@@ -79,5 +79,3 @@ class queue():
 
         from playlist_management import display_audio_in_playlist
         return display_audio_in_playlist(self.playlist)[self.index]
-
-
