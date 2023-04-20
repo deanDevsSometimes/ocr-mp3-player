@@ -77,6 +77,7 @@ def move_audio_file_from_downloaded_audio(file, playlist):
 
 
 def move_audio_file_from_playlist(file, playlist1, playlist2):
+    file, playlist1, playlist2 = str(file), str(playlist1), str(playlist2)
     if not playlist_exists(playlist1):
         return False
 
