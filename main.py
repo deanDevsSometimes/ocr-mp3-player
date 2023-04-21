@@ -770,17 +770,16 @@ class MyApp(tk.Tk):
         self.song_name.set(song_name)
         self.update_progress()
 
-
     def skip_forward(self):
-        """
-        Skips to the next track in the queue.
-        """
-        # Pause the current track
-        self.pause()
-        # Move to the next track in the queue
-        self.music_queue.next_item()
-        # Play the next track
-        self.play(self.music_queue.display_playing_track())
+        # Stop the current track
+        self.player.stop()
+
+        # Get the next track to play
+        next_track = self.music_queue.next_item()
+
+        # If there is a next track, play it
+        if next_track:
+            self.play(next_track)
 
     def skip_backward(self):
         """
@@ -815,7 +814,7 @@ class MyApp(tk.Tk):
         """
         current_time = self.player.get_time()
         # Ensure that the new time does not exceed the duration of the track
-        track_duration = self.player.get_duration()
+        track_duration = self.player.get_length()
         new_time = min(track_duration, current_time + step)
         self.player.set_time(new_time)
 
@@ -827,8 +826,14 @@ class MyApp(tk.Tk):
         if not self.dragging:
             self.progress_bar.set(current_position * 100)
 
+        # Check if the player has finished playing the song
+        state = self.player.get_state()
+        if state == vlc.State.Ended:
+            self.skip_forward()
+
         # Call the update_progress function again after 100 milliseconds
         self.after(100, self.update_progress)
+
 
     def on_scale_drag_start(self, event):
         """
